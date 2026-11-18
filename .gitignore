@@ -1,0 +1,15 @@
+# dependencies and build output
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# design-process notes kept local (client and prospect details)
+PRODUCT.md
+.impeccable/
+.hallmark/
+.taste-skill/
+
+# local env
+.env*
