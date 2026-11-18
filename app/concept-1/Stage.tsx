@@ -182,7 +182,7 @@ export default function Stage({ images, active, alts }: { images: string[]; acti
       ))}
       {gl && (
         <div className="c1-stage-gl" data-ready={ready} aria-hidden>
-          <Canvas flat linear dpr={[1, 2]} gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}>
+          <Canvas flat linear dpr={[1, 1.5]} gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}>
             <Plane images={images} active={active} onReady={() => setReady(true)} />
           </Canvas>
         </div>

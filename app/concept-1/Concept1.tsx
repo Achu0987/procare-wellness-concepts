@@ -163,7 +163,7 @@ export default function Concept1() {
               ease: "none",
               scrollTrigger: {
                 trigger: ".pc-journey",
-                start: "top top",
+                start: "top top+=76",
                 end: () => `+=${dist()}`,
                 pin: true,
                 scrub: 1,
@@ -194,13 +194,13 @@ export default function Concept1() {
           splits.push(h1);
           gsap
             .timeline({ defaults: { ease: "expo.out" } })
-            .from(".pc-hero-media", { scale: 1.22, duration: 2.4, ease: "power3.out" }, 0)
+            .from(".pc-hero-media", { scale: 1.15, duration: 2.2, ease: "power3.out" }, 0)
             .from(".pc-hero-scrim", { opacity: 0, duration: 1.2 }, 0.1)
             .from(h1.words, { yPercent: 120, rotate: 4, duration: 1.3, stagger: 0.06 }, 0.3)
             .from(".pc-hero [data-r]", { y: 20, opacity: 0, duration: 1, stagger: 0.1 }, 0.9);
-          gsap.to(".pc-hero-frame", { clipPath: "inset(6% 4% 10% 4%)", ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "top top", end: "bottom top", scrub: true } });
-          gsap.to(".pc-hero-media", { scale: 1.12, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "top top", end: "bottom top", scrub: true } });
-          gsap.to(".pc-hero-grid", { y: -120, opacity: 0, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "20% top", end: "75% top", scrub: true } });
+          // Leaving the hero: the picture eases back into a framed card. Transform only, so it stays smooth.
+          gsap.to(".pc-hero-frame", { scale: 0.9, yPercent: 3, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "top top", end: "bottom top", scrub: 0.4 } });
+          gsap.to(".pc-hero-grid", { y: -120, opacity: 0, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "20% top", end: "75% top", scrub: 0.4 } });
 
           /* ---------- 3. Everything that plays as it arrives (and replays when scrolled back past) ---------- */
           const enter = (trigger: Element | string, start = "top 82%") => ({
@@ -363,7 +363,8 @@ export default function Concept1() {
           <div className="pc-hero-frame">
             <figure className="pc-hero-photo" data-slot="hero" data-alt="ProCare's own reception or treatment room, in daylight">
               <div className="pc-hero-media">
-                <Stage images={HERO_IMAGES} active={0} alts={HERO_ALTS} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={HERO_IMAGES[0]} alt={HERO_ALTS[0]} width={2000} height={1348} fetchPriority="high" decoding="async" />
               </div>
             </figure>
             <div className="pc-hero-scrim" aria-hidden="true" />

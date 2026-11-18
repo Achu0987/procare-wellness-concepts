@@ -61,7 +61,8 @@
 /* ---------- hero: a full-bleed poster, the words on a navy scrim ---------- */
 .pc-hero { position: relative; display: grid; grid-template-rows: 1fr auto; min-height: calc(100svh - var(--nav-h)); overflow: hidden; background: var(--color-field); color: var(--color-field-ink); isolation: isolate; }
 .pc-hero-photo { position: absolute; inset: 0; z-index: 0; transform-origin: 60% 50%; }
-.pc-hero-media { position: absolute; inset: 0; }
+.pc-hero-media { position: absolute; inset: 0; will-change: transform; }
+.pc-hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: 40% 50%; }
 .pc [data-slot] { background: var(--color-paper-3); }
 .pc-hero .pc-hero-photo { background: var(--color-field); color: var(--color-field-ink); }
 .pc-hero-scrim {
@@ -256,7 +257,7 @@
 /* ---------- pass 3: the scroll layer ---------- */
 .pc-progress-top { position: fixed; inset: 0 0 auto 0; z-index: var(--z-toast); height: 3px; background: var(--color-teal); transform: scaleX(0); transform-origin: left; pointer-events: none; }
 .pc-mask { padding-bottom: 0.06em; }
-.pc-hero-frame { position: absolute; inset: 0; z-index: 0; clip-path: inset(0 0 0 0); }
+.pc-hero-frame { position: absolute; inset: 0; z-index: 0; overflow: hidden; transform-origin: 50% 0; will-change: transform; }
 
 /* What ProCare does */
 .pc-intro { padding-block: var(--section-gap) var(--section-gap-s); }
@@ -343,3 +344,25 @@
 @media (prefers-reduced-motion: reduce) {
   .pc-zoom-mask { display: none; }
 }
+
+/* ---------- pass 5: the first visit fits one screen; the chapter goes dark ---------- */
+@media (min-width: 60.0625rem) {
+  .pc-journey { min-height: calc(100svh - var(--nav-h)); display: flex; flex-direction: column; justify-content: center; padding-block: var(--space-xl); }
+  .pc-journey .pc-journey-head h2 { font-size: var(--text-section); }
+  .pc-journey-track { margin-top: var(--space-xl); }
+  .pc-journey-card { width: calc(min(42svh, 30rem) * 1.6); gap: var(--space-md); }
+  .pc-journey-bar { margin-top: var(--space-lg); }
+}
+.pc-chapter, .pc-chapter-pin { background: var(--color-field); color: var(--color-field-ink); }
+.pc-chapter :focus-visible { outline-color: var(--color-teal); }
+.pc-rail-btn { color: var(--color-field-muted); }
+.pc-rail-btn:hover, .pc-rail-btn[aria-current="true"] { color: var(--color-field-ink); }
+.pc-rail-btn::before { background: var(--color-teal); }
+.pc-chapter .pc-room-summary { color: var(--color-field-ink); }
+.pc-chapter .pc-room-cond { color: var(--color-field-muted); }
+.pc-chapter .pc-link { color: var(--color-field-ink); text-decoration-color: var(--color-teal); }
+.pc-chapter .fill { color: var(--color-field-muted); outline-color: var(--color-field-muted); }
+.pc-chapter .pc-also { color: var(--color-field-muted); }
+.pc-stage { background: var(--color-field-2); }
+.pc-stage-cap { background: var(--color-field-ink); color: var(--color-ink); }
+.pc-stage-tr { color: var(--color-muted); }
