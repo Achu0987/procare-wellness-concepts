@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const concepts = [
   { href: "/concept-1/", name: "Concept 1", title: "Premium medical authority", note: "Cinematic scroll: the ProCare zoom, six specialties, the first visit.", ready: true },
+  { href: "/hero-options/", name: "Hero options", title: "Three hero designs to choose from", note: "Calm centred, medical split, or photograph with a care card.", ready: true },
   { href: "", name: "Concept 2", title: "Patient-first, condition-based", note: "In progress", ready: false },
   { href: "", name: "Concept 3", title: "Interactive healthcare experience", note: "In progress", ready: false },
 ];
