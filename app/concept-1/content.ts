@@ -178,7 +178,7 @@ export const AREAS = [
 ];
 
 export const CREDITS =
-  "Photographs: Fountain in Forsyth Park, Savannah, by Carol M. Highsmith, Library of Congress, public domain. Clinical photographs: Unsplash (Unsplash License), stand-ins for ProCare’s own photography. Neuropathy and spine images: pcw.health.";
+  "Photographs: Fountain in Forsyth Park, Savannah, by Carol M. Highsmith, Library of Congress, public domain. Clinical and lifestyle photographs: Unsplash (Unsplash License), stand-ins for ProCare’s own photography. Neuropathy and spine images: pcw.health.";
 
 // Conditions named on pcw.health, for the scroll-driven strips.
 export const MARQUEE = [
