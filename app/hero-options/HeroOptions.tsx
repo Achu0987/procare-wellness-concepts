@@ -154,7 +154,7 @@ export default function HeroOptions() {
               transition={{ duration: 1.4, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${BP}/c1/golf.jpg`} alt="A man swinging a golf club on a green course" width={1600} height={1067} />
+              <img src={`${BP}/c1/neuropathy.webp`} alt="An older woman smiling as she shapes a ceramic bowl with her hands" width={600} height={900} />
             </motion.figure>
           </div>
           <motion.ul className="ho-b-spec" {...rise(0.5)}>

@@ -116,6 +116,17 @@ export default function Concept1() {
 
         /* ================= 1. Pinned scenes, in page order ================= */
 
+        // Hero: the rounded picture opens to the whole screen and holds while its facts arrive.
+        gsap
+          .timeline({
+            scrollTrigger: { trigger: ".pc-reveal", start: "top top+=80", end: "+=120%", pin: ".pc-reveal-pin", scrub: 0.8, anticipatePin: 1 },
+          })
+          .fromTo(".pc-reveal-photo", { clipPath: "inset(0% 4% 0% 4% round 28px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "power2.inOut", duration: 0.5 }, 0)
+          .fromTo(".pc-reveal-photo img", { scale: 1.12 }, { scale: 1, ease: "none", duration: 1 }, 0)
+          .fromTo(".pc-reveal-scrim", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 0.3)
+          .fromTo(".pc-reveal-cap", { y: 60, opacity: 0 }, { y: 0, opacity: 1, ease: "power3.out", duration: 0.35 }, 0.45)
+          .fromTo(".pc-chips", { y: 0 }, { y: -20, ease: "none", duration: 0.5 }, 0.5);
+
         // The name opens.
         gsap
           .timeline({ scrollTrigger: { trigger: ".pc-zoom", start: "top top", end: "+=180%", pin: ".pc-zoom-pin", scrub: 1, anticipatePin: 1 } })
@@ -196,14 +207,17 @@ export default function Concept1() {
         gsap.to(".pc-progress-top", { scaleX: 1, ease: "none", scrollTrigger: { start: 0, end: "max", scrub: 0.3 } });
         const h1 = SplitText.create(".pc-hero h1", { type: "words,lines", mask: "lines", linesClass: "pc-mask" });
         splits.push(h1);
+        // Load: the light arrives, the words rise, the picture lifts into place.
         gsap
           .timeline({ defaults: { ease: "expo.out" } })
-          .from(".pc-hero-media", { scale: 1.18, duration: 2.4, ease: "power3.out" }, 0)
-          .from(".pc-hero-scrim", { opacity: 0, duration: 1.2 }, 0.1)
-          .from(h1.words, { yPercent: 120, rotate: 4, duration: 1.3, stagger: 0.06 }, 0.3)
-          .from(".pc-hero [data-r]", { y: 20, opacity: 0, duration: 1, stagger: 0.1 }, 0.9);
-        gsap.to(".pc-hero-frame", { scale: 0.9, yPercent: 3, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "top top", end: "bottom top", scrub: 0.4 } });
-        gsap.to(".pc-hero-grid", { y: -120, opacity: 0, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "20% top", end: "75% top", scrub: 0.4 } });
+          .from(".pc-aura span", { opacity: 0, scale: 0.6, duration: 2.4, stagger: 0.2 }, 0)
+          .from(".pc-hero .pc-pill", { y: 18, opacity: 0, duration: 0.9 }, 0.1)
+          .from(h1.words, { yPercent: 120, duration: 1.3, stagger: 0.05 }, 0.2)
+          .from(".pc-hero .pc-lead, .pc-hero .pc-actions", { y: 24, opacity: 0, duration: 1, stagger: 0.1 }, 0.7)
+          .from(".pc-reveal-photo", { y: 140, opacity: 0, duration: 1.6 }, 0.5)
+          .from(".pc-chip", { y: 30, opacity: 0, duration: 1, stagger: 0.1 }, 1.1);
+        // The words step back as the picture comes forward.
+        gsap.to(".pc-hero-text", { y: -80, opacity: 0, ease: "none", scrollTrigger: { trigger: ".pc-hero", start: "top top", end: "35% top", scrub: 0.4 } });
 
         /* ================= 3. Scenes that play on arrival ================= */
         const enter = (trigger: Element | string, start = "top 80%") => ({ trigger, start, toggleActions: "play none none reverse" });
@@ -223,6 +237,7 @@ export default function Concept1() {
             scrollTrigger: enter(el, "top 92%"),
           });
         });
+        gsap.from(".pc-treat-item", { y: 40, opacity: 0, duration: 0.9, ease: "expo.out", stagger: 0.07, scrollTrigger: enter(".pc-treat", "top 92%") });
         gsap.from(".pc-figure", { y: 60, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.1, scrollTrigger: enter(".pc-figures", "top 92%") });
 
         gsap.fromTo(".pc-strip-0", { xPercent: 0 }, { xPercent: -35, ease: "none", scrollTrigger: { trigger: ".pc-marquee", start: "top bottom", end: "bottom top", scrub: 0.6 } });
@@ -254,7 +269,6 @@ export default function Concept1() {
         gsap.from(".pc-faq-item", { y: 30, opacity: 0, duration: 0.8, ease: "expo.out", stagger: 0.06, scrollTrigger: enter(".pc-faq-list", "top 88%") });
 
         // The close: Savannah opens behind the booking card.
-        gsap.fromTo(".pc-book-bg img", { scale: 1.3 }, { scale: 1, ease: "none", scrollTrigger: { trigger: ".pc-book", start: "top bottom", end: "bottom bottom", scrub: true } });
         gsap.from(".pc-book-card", { y: 120, opacity: 0, duration: 1.3, ease: "expo.out", scrollTrigger: enter(".pc-book", "top 60%") });
         gsap.from(".pc-form > *", { y: 24, opacity: 0, duration: 0.8, ease: "expo.out", stagger: 0.05, scrollTrigger: enter(".pc-form", "top 92%") });
 
@@ -314,7 +328,7 @@ export default function Concept1() {
         <div className="container pc-nav-in">
           <a href="#top" className="pc-logo" aria-label="ProCare Wellness Institute, home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BP}/c1/procare-logo-white.png`} alt="ProCare Wellness Institute, Regenerative and Aesthetic Medicine" width={480} height={135} />
+            <img src={`${BP}/c1/procare-logo-color.png`} alt="ProCare Wellness Institute, Regenerative and Aesthetic Medicine" width={480} height={135} />
           </a>
           <nav aria-label="Primary" className="pc-nav-links">
             <a href="#specialties" onClick={go("#specialties")}>Specialties</a>
@@ -335,45 +349,62 @@ export default function Concept1() {
       </header>
 
       <main id="main" tabIndex={-1}>
-        {/* ===== 1. Hero: the cinematic poster ===== */}
+        {/* ===== 1. Hero: calm centred, then the picture opens to the whole screen ===== */}
         <section className="pc-hero" id="top" aria-labelledby="pc-h1">
-          <div className="pc-hero-frame">
-            <figure className="pc-hero-photo">
-              <div className="pc-hero-media">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`${BP}/c1/consult.jpg`} alt="A bright, quiet clinic lounge with a palm and green armchairs" width={2000} height={1348} fetchPriority="high" />
-              </div>
-            </figure>
-            <div className="pc-hero-scrim" aria-hidden="true" />
+          <div className="pc-aura" aria-hidden="true">
+            <span className="pc-aura-a" />
+            <span className="pc-aura-b" />
           </div>
-          <div className="container pc-hero-grid">
-            <div className="pc-hero-text">
-              <h1 id="pc-h1">Specialist care, without surgery.</h1>
-              <p className="pc-lead" data-r>
-                Joint pain, neuropathy, wound care and chronic pain, treated in Savannah.
-              </p>
-              <div className="pc-actions" data-r>
-                <motion.a href="#book" onClick={go("#book")} className="pc-btn pc-btn-primary pc-btn-lg" whileTap={{ scale: 0.98 }}>
-                  Book a consultation <Arrow />
-                </motion.a>
-                <a href={PHONE_TEL} className="pc-btn pc-btn-glass pc-btn-lg">
-                  <PhoneIcon />
-                  <span>{PHONE_DISPLAY}</span>
-                </a>
-              </div>
+          <div className="container pc-hero-text">
+            <p className="pc-pill" data-r data-open={status?.open ?? false}>
+              <span className="pc-live-dot" aria-hidden="true" />
+              {status ? status.text : "Open Monday to Thursday"}
+              <span className="pc-pill-sep" aria-hidden="true" />
+              <span className="pc-pill-place">Savannah, Georgia</span>
+            </p>
+            <h1 id="pc-h1">Specialist care for pain, nerves and wounds, without surgery.</h1>
+            <p className="pc-lead" data-r>
+              Six specialties and one experienced team, under one roof in Savannah.
+            </p>
+            <div className="pc-actions" data-r>
+              <motion.a href="#book" onClick={go("#book")} className="pc-btn pc-btn-ink pc-btn-lg" whileTap={{ scale: 0.98 }}>
+                Book a consultation <Arrow />
+              </motion.a>
+              <a href={PHONE_TEL} className="pc-btn pc-btn-quiet pc-btn-lg">
+                <PhoneIcon />
+                <span>Call {PHONE_DISPLAY}</span>
+              </a>
             </div>
           </div>
-          <div className="pc-hero-band">
-            <div className="container pc-hero-facts" data-r>
-              <p className="pc-hero-status" data-open={status?.open ?? false}>
-                <span className="pc-live-dot" aria-hidden="true" />
-                {status ? status.text : "Open Monday to Thursday"}
+
+          <div className="pc-reveal">
+            <div className="pc-reveal-pin">
+              <figure className="pc-reveal-photo">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`${BP}/c1/consult.jpg`} alt="A bright, calm clinic lounge with a palm and green armchairs" width={2000} height={1348} fetchPriority="high" />
+              </figure>
+              <div className="pc-reveal-scrim" aria-hidden="true" />
+              <p className="pc-reveal-cap">
+                Every specialist you need,
+                <br />
+                under one roof.
               </p>
-              <a href={MAPS_URL} target="_blank" rel="noreferrer">
-                {ADDRESS_LINE_1}, Savannah
-              </a>
-              <p>Same-day urgent appointments available</p>
-              <p>Insurance benefits verified at your first visit</p>
+              <ul className="pc-chips" aria-label="Good to know">
+                <li className="pc-chip">
+                  <strong>Same-day</strong>
+                  <span>urgent appointments</span>
+                </li>
+                <li className="pc-chip">
+                  <strong>Insurance</strong>
+                  <span>verified at your first visit</span>
+                </li>
+                <li className="pc-chip">
+                  <strong>Building 500</strong>
+                  <a href={MAPS_URL} target="_blank" rel="noreferrer">
+                    {ADDRESS_LINE_1.replace(", Building 500", "")}
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
@@ -383,7 +414,7 @@ export default function Concept1() {
           <div className="pc-zoom-pin">
             <div className="pc-zoom-photo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${BP}/c1/team.jpg`} alt="" width={2000} height={1333} loading="lazy" />
+              <img src={`${BP}/c1/forsyth.jpg`} alt="" width={3840} height={2923} loading="lazy" />
             </div>
             <svg className="pc-zoom-mask" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
               <defs>
@@ -422,6 +453,23 @@ export default function Concept1() {
                 </li>
               ))}
             </ul>
+            <div className="pc-treat">
+              <p className="pc-treat-label">What we treat</p>
+              <ul className="pc-treat-list">
+                {SPECIALTIES.map((s, i) => (
+                  <li key={s.id} className="pc-treat-item">
+                    <button type="button" onClick={() => (roomsRef.current ? toRoom(i) : scrollTo("#specialties"))}>
+                      <span className="pc-treat-img">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={s.image} alt="" width={160} height={160} loading="lazy" />
+                      </span>
+                      <span className="pc-treat-name">{s.name}</span>
+                      <Arrow size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -551,7 +599,7 @@ export default function Concept1() {
         <section className="pc-team" id="team" aria-labelledby="pc-team-h">
           <figure className="pc-team-photo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BP}/c1/physio.jpg`} alt="A therapist's hands working on a patient's leg" width={1400} height={933} loading="lazy" />
+            <img src={`${BP}/c1/team.jpg`} alt="Two clinicians reviewing a patient's imaging together on a screen" width={2000} height={1333} loading="lazy" />
           </figure>
           <div className="pc-team-scrim" aria-hidden="true" />
           <div className="container pc-team-grid">
@@ -625,11 +673,9 @@ export default function Concept1() {
 
         {/* ===== 10. The close: Savannah behind the booking ===== */}
         <section className="pc-book" id="book" aria-labelledby="pc-book-h">
-          <figure className="pc-book-bg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BP}/c1/forsyth.jpg`} alt="The white cast-iron fountain in Forsyth Park, Savannah, under a blue sky" width={3840} height={2923} loading="lazy" />
-          </figure>
-          <div className="pc-book-scrim" aria-hidden="true" />
+          <div className="pc-aura pc-aura-book" aria-hidden="true">
+            <span className="pc-aura-a" />
+          </div>
           <div className="container pc-book-in">
             <div className="pc-book-card">
               <div className="pc-book-form">
@@ -700,7 +746,7 @@ export default function Concept1() {
               </div>
             </div>
             <p className="pc-book-cap">
-              Forsyth Park, Savannah. Patients come from {AREAS.slice(0, -1).join(", ")} and {AREAS[AREAS.length - 1]}.
+              Patients come from {AREAS.slice(0, -1).join(", ")} and {AREAS[AREAS.length - 1]}.
             </p>
           </div>
         </section>
