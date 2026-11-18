@@ -275,3 +275,13 @@
   .pc-aura i { animation: none; }
   .pc-care-img { transition: none; }
 }
+
+/* ---------- pass 2: photos show on the first screen ---------- */
+.pc-hero-text { padding: clamp(28px, 4.5vh, 64px) var(--gutter) var(--space-lg); }
+.pc-hero h1 { margin-top: var(--space-md); font-size: clamp(2.75rem, 3.6vw + 0.75rem, 5rem); }
+.pc-hero-lead { margin-top: var(--space-md); }
+.pc-actions { margin-top: var(--space-lg); }
+.pc-fan { margin-top: -14svh; }
+@media (max-width: 60rem) {
+  .pc-fan { margin-top: 0; }
+}
