@@ -20,6 +20,17 @@ const CARE = [
   { id: "regenerative", label: "Regenerative recovery", title: "Heal well after an injury or surgery.", img: IMG("strength.jpg"), alt: "A therapist guiding a patient through a strength exercise" },
 ];
 
+
+// Three plain points per specialty: what it is, how ProCare treats it, what to expect.
+const POINTS: [string, string][][] = [
+  [["What we treat", "Knee, hip and shoulder pain, arthritis, tendon and ligament injuries"], ["How", "Hyaluronic acid injections, PRP and shockwave therapy"], ["The aim", "Guided imaging and bracing, without surgery"]],
+  [["What we treat", "Numbness, tingling and burning in the hands and feet"], ["How", "Drug-free electroanalgesic therapy and neuromodulation"], ["The aim", "Calmer nerves for diabetic, peripheral and post-chemo neuropathy"]],
+  [["What we treat", "Diabetic, pressure and venous ulcers, burns and surgical wounds"], ["How", "Amniotic membrane therapy and red light therapy"], ["The aim", "Lower infection risk, grow new tissue, close the wound"]],
+  [["What we treat", "Back pain, sciatica, disc disease and spinal stenosis"], ["How", "Injections, regenerative therapies and physical therapy"], ["The aim", "Manage it without surgery wherever possible"]],
+  [["What we treat", "Circulation problems that show up in the legs and feet"], ["How", "Assessed together with your wound and pain care"], ["The aim", "Care for venous and arterial ulcers in one plan"]],
+  [["What we treat", "Recovery after an injury or surgery"], ["How", "Platelet-rich plasma and peptide therapy"], ["The aim", "Physical therapy on site and remotely to rebuild strength"]],
+];
+
 const STEPS = [
   { n: "01", title: "Call or request a visit", line: "Same-day urgent appointments are available.", img: "" },
   { n: "02", title: "Arrive 15 minutes early", line: "Bring medical records, your insurance card and loose clothing.", img: IMG("clinic-care.jpg") },
@@ -69,6 +80,7 @@ function Cross() {
 
 export default function Concept1() {
   const [care, setCare] = useState(0);
+  const [pts, setPts] = useState(3);
   const [concern, setConcern] = useState("");
   const [note, setNote] = useState(false);
   const status = useOpenStatus();
@@ -109,10 +121,22 @@ export default function Concept1() {
             .fromTo(".pc-fan-chip", { opacity: 0, y: 30 }, { opacity: 1, y: 0, stagger: 0.06, duration: 0.25 }, 0.72);
         }
 
-        // Specialties: the picture holds while the six stories pass; it changes with each.
+        // Specialties: the section holds while each panel opens in turn.
         if (desktop) {
-          gsap.utils.toArray<HTMLElement>(".pc-care-item").forEach((el, i) => {
-            ScrollTrigger.create({ trigger: el, start: "top 55%", end: "bottom 55%", onToggle: (self) => self.isActive && setCare(i) });
+          ScrollTrigger.create({
+            trigger: ".pc-acc-pin",
+            start: "top top",
+            end: () => "+=" + window.innerHeight * 0.85 * CARE.length,
+            pin: true,
+            anticipatePin: 1,
+            onUpdate: (self) => {
+              const pos = self.progress * CARE.length;
+              const i = Math.min(CARE.length - 1, Math.floor(pos));
+              const local = Math.min(0.999, pos - i);
+              const n = Math.min(3, 1 + Math.floor(local * 3.6));
+              setCare((c) => (c === i ? c : i));
+              setPts((p) => (p === n ? p : n));
+            },
           });
         }
 
@@ -149,18 +173,21 @@ export default function Concept1() {
 
         const fill = SplitText.create(".pc-intro-text", { type: "words" });
         splits.push(fill);
-        gsap.fromTo(fill.words, { opacity: 0.14 }, { opacity: 1, ease: "none", stagger: 0.1, scrollTrigger: { trigger: ".pc-intro", start: "top 72%", end: "bottom 60%", scrub: true } });
+        gsap.fromTo(fill.words, { opacity: 0.18 }, { opacity: 1, ease: "none", stagger: 0.1, scrollTrigger: { trigger: ".pc-intro-text", start: "top 80%", end: "bottom 55%", scrub: true } });
 
         gsap.utils.toArray<HTMLElement>("[data-count]").forEach((el) => {
           const o = { v: 0 };
           gsap.to(o, { v: Number(el.dataset.count), duration: 1.8, ease: "power2.out", onUpdate: () => { el.textContent = String(Math.round(o.v)); }, scrollTrigger: enter(el, "top 92%") });
         });
-        gsap.from(".pc-stat", { y: 60, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.1, scrollTrigger: enter(".pc-stats", "top 88%") });
-
-        gsap.from(".pc-care-media", { clipPath: "inset(12% 10% 12% 10% round 28px)", duration: 1.6, ease: "expo.out", scrollTrigger: enter(".pc-care", "top 70%") });
-        gsap.utils.toArray<HTMLElement>(".pc-care-item").forEach((el) => {
-          gsap.from(el.children, { y: 40, opacity: 0, duration: 1, ease: "expo.out", stagger: 0.07, scrollTrigger: enter(el, "top 80%") });
+        // The bento: each tile tips up out of the page, its picture drifting inside.
+        gsap.from(".pc-tile", { y: 120, rotateX: 18, opacity: 0, transformPerspective: 1200, transformOrigin: "50% 100%", duration: 1.3, ease: "expo.out", stagger: 0.09, scrollTrigger: enter(".pc-bento", "top 85%") });
+        gsap.utils.toArray<HTMLElement>(".pc-tile-bg img, .pc-tile-thumb img").forEach((img) => {
+          gsap.fromTo(img, { yPercent: -8, scale: 1.18 }, { yPercent: 8, scale: 1.18, ease: "none", scrollTrigger: { trigger: img.closest(".pc-tile"), start: "top bottom", end: "bottom top", scrub: true } });
         });
+        gsap.from(".pc-tile-dots i", { scale: 0, opacity: 0, duration: 0.6, ease: "back.out(2)", stagger: 0.06, scrollTrigger: enter(".pc-tile-e", "top 85%") });
+
+        gsap.from(".pc-tx-tab", { y: 40, opacity: 0, duration: 1, ease: "expo.out", stagger: 0.06, scrollTrigger: enter(".pc-tx", "top 92%") });
+        gsap.from(".pc-tx-panel", { y: 100, opacity: 0, duration: 1.3, ease: "expo.out", scrollTrigger: enter(".pc-tx", "top 85%") });
 
         // The venn: two circles meet in one plan.
         gsap.fromTo(".pc-venn-a", { xPercent: -40, opacity: 0 }, { xPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: ".pc-venn", start: "top 85%", end: "center 55%", scrub: true } });
@@ -298,78 +325,123 @@ export default function Concept1() {
         {/* ===== What ProCare does, in one sentence ===== */}
         <section className="pc-intro" aria-labelledby="pc-intro-h">
           <div className="container">
-            <h2 id="pc-intro-h" className="pc-intro-text">
-              ProCare brings physicians, nurse practitioners, wound care specialists and physical therapists together in one Savannah building, so your pain is treated as one plan, not three referrals.
-            </h2>
-            <ul className="pc-stats">
-              {FIGURES.map((f) => (
-                <li key={f.label} className="pc-stat">
-                  <span className="pc-stat-num num">
-                    {f.prefix}
-                    <span data-count={f.value}>{f.value}</span>
-                  </span>
-                  <span className="pc-stat-label">{f.label}</span>
-                </li>
-              ))}
+            <div className="pc-intro-head">
+              <h2 id="pc-intro-h" data-split>One place for the care you need.</h2>
+              <p className="pc-intro-text">
+                Physicians, nurse practitioners, wound care specialists and physical therapists work together in one Savannah building, so your pain is treated as one plan, not three referrals.
+              </p>
+            </div>
+            <ul className="pc-bento">
+              <li className="pc-tile pc-tile-photo pc-tile-a">
+                <figure className="pc-tile-bg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={IMG("physio-knee.jpg")} alt="" width={1600} height={1000} loading="lazy" />
+                </figure>
+                <span className="pc-tile-num num"><span data-count={6}>6</span></span>
+                <span className="pc-tile-label">clinical specialties under one roof</span>
+                <span className="pc-tile-list">Joint pain · Neuropathy · Wound care · Spine · Circulation · Recovery</span>
+              </li>
+              <li className="pc-tile pc-tile-photo pc-tile-b">
+                <figure className="pc-tile-bg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`${BP}/c1/forsyth.jpg`} alt="" width={1600} height={1200} loading="lazy" />
+                </figure>
+                <span className="pc-tile-num num"><span data-count={13}>13</span></span>
+                <span className="pc-tile-label">Savannah-area communities served</span>
+              </li>
+              <li className="pc-tile pc-tile-teal pc-tile-c">
+                <svg className="pc-tile-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                <span className="pc-tile-word">Same-day</span>
+                <span className="pc-tile-label">urgent appointments available</span>
+              </li>
+              <li className="pc-tile pc-tile-white pc-tile-d">
+                <figure className="pc-tile-thumb">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={IMG("clinic-talk.jpg")} alt="" width={800} height={600} loading="lazy" />
+                </figure>
+                <span className="pc-tile-num num">40–<span data-count={60}>60</span></span>
+                <span className="pc-tile-label">minute first visit, from assessment to plan</span>
+              </li>
+              <li className="pc-tile pc-tile-lilac pc-tile-e">
+                <span className="pc-tile-num num"><span data-count={6}>6</span></span>
+                <span className="pc-tile-label">kinds of clinician on one team</span>
+                <span className="pc-tile-dots" aria-hidden="true">
+                  {["MD", "PA", "NP", "WC", "PT", "WL"].map((d) => (
+                    <i key={d}>{d}</i>
+                  ))}
+                </span>
+              </li>
             </ul>
           </div>
         </section>
 
         {/* ===== What we treat: a held picture, six stories ===== */}
         <section className="pc-care" id="care" aria-labelledby="pc-care-h">
-          <div className="container">
-            <div className="pc-head pc-head-center">
+          <div className="pc-acc-pin">
+            <div className="container pc-acc-head">
               <h2 id="pc-care-h" data-split>What we treat</h2>
-              <p className="pc-head-lead">Six specialties under one roof. Find yours, then book for exactly that.</p>
+              <p className="pc-head-lead">Six specialties under one roof. Open yours, then book for exactly that.</p>
             </div>
-            <div className="pc-care-grid">
-              <ol className="pc-care-list">
-                {CARE.map((c, i) => {
-                  const s = SPECIALTIES[i];
-                  return (
-                    <li key={c.id} className="pc-care-item" data-active={care === i}>
-                      <p className="pc-care-label">
-                        <Cross /> {c.label}
-                      </p>
-                      <h3 className="pc-care-title">{c.title}</h3>
-                      <p className="pc-care-sum">{s.summary}</p>
-                      <ul className="pc-tags">
-                        {s.conditions.slice(0, 4).map((t) => (
-                          <li key={t}>{t}</li>
-                        ))}
-                      </ul>
-                      {s.confirm && <p className="pc-confirm">{s.confirm}</p>}
-                      <figure className="pc-care-inline">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={c.img} alt={c.alt} width={1200} height={800} loading="lazy" />
-                      </figure>
-                      <div className="pc-care-links">
-                        <button type="button" className="pc-btn pc-btn-primary pc-btn-sm" onClick={() => bookFor(s.name)}>
-                          Book for this <Arrow size={16} />
-                        </button>
-                        <a href={s.href} target="_blank" rel="noreferrer" className="pc-link">
-                          Learn more
-                        </a>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-              <div className="pc-care-sticky">
-                <div className="pc-care-media">
-                  {CARE.map((c, i) => (
-                    <figure key={c.id} className="pc-care-img" data-on={care === i}>
+            <div className="container pc-tx">
+              <div className="pc-tx-tabs" role="tablist" aria-label="Specialties">
+                {CARE.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={care === i}
+                    className="pc-tx-tab"
+                    onClick={() => { setCare(i); setPts(3); }}
+                  >
+                    <span className="pc-tx-thumb">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.img} alt={care === i ? c.alt : ""} width={1600} height={1100} loading={i === 0 ? "eager" : "lazy"} />
+                      <img src={c.img} alt="" width={96} height={96} loading="lazy" />
+                    </span>
+                    <span className="pc-tx-name">{SPECIALTIES[i].short}</span>
+                  </button>
+                ))}
+                <span className="pc-tx-ind" aria-hidden="true" style={{ transform: `translateX(${care * 100}%)` }} />
+              </div>
+
+              <div className="pc-tx-panel" role="tabpanel" aria-label={CARE[care].label}>
+                <div className="pc-tx-media">
+                  {CARE.map((c, i) => (
+                    <figure key={c.id} className="pc-tx-img" data-on={care === i}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={c.img} alt={care === i ? c.alt : ""} width={1600} height={1100} loading="lazy" />
                     </figure>
                   ))}
-                  <div className="pc-care-tab">
-                    <span className="pc-care-count num">{String(care + 1).padStart(2, "0")} / 06</span>
-                    <span>{CARE[care].label}</span>
+                  <span className="pc-tx-count num">{String(care + 1).padStart(2, "0")} / 06</span>
+                </div>
+                <div className="pc-tx-body" key={CARE[care].id}>
+                  <p className="pc-care-label"><Cross /> {CARE[care].label}</p>
+                  <h3 className="pc-tx-title">{CARE[care].title}</h3>
+                  <ol className="pc-tx-points">
+                    {POINTS[care].map(([k, v], j) => (
+                      <li key={k} data-on={j < pts}>
+                        <span className="pc-tx-check" aria-hidden="true">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
+                        </span>
+                        <span className="pc-tx-k">{k}</span>
+                        <span className="pc-tx-v">{v}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {SPECIALTIES[care].confirm && <p className="pc-confirm">{SPECIALTIES[care].confirm}</p>}
+                  <div className="pc-care-links">
+                    <button type="button" className="pc-btn pc-btn-primary" onClick={() => bookFor(SPECIALTIES[care].name)}>
+                      Book for {SPECIALTIES[care].short.toLowerCase()} <Arrow size={16} />
+                    </button>
+                    <a href={SPECIALTIES[care].href} target="_blank" rel="noreferrer" className="pc-link">Learn more</a>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+          <div className="container">
             <div className="pc-also">
               <p>Also in Building 500</p>
               <ul>
