@@ -856,8 +856,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; heig
 .pc-aura i { filter: none; animation: none; }
 /* parallax pictures and pinned stages ride on their own GPU layers */
 .pc-tile-bg img, .pc-tile-thumb img, .pc-life-img, .pc-banner-bg img, .pc-fan-card, .pc-steps-track { will-change: transform; }
-/* skip layout and paint for sections far off screen */
-.pc-quotes, .pc-faq, .pc-ins, .pc-team { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 /* hero FLIP: the centre card is full-screen and scaled; a spacer keeps its place in the row */
 .pc-fan-inner { position: absolute; inset: 0; transform-origin: 50% 50%; }
 .pc-fan-spacer { display: none; flex: none; }
