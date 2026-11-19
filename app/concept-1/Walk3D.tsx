@@ -238,8 +238,8 @@ export default function Walk3D({ rooms, endImg, driver }: { rooms: WalkRoom[]; e
     let raf = 0;
     const frame = () => {
       const goal = target(driver.current.t);
-      cam.z += (goal.z - cam.z) * 0.12;
-      cam.x += (goal.x - cam.x) * 0.12;
+      cam.z += (goal.z - cam.z) * 0.16;
+      cam.x += (goal.x - cam.x) * 0.16;
       camera.position.set(cam.x, 0, cam.z);
       // near the garden the fog lifts so the picture is clear
       const fog = scene.fog as THREE.Fog;

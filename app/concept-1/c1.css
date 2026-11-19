@@ -846,3 +846,24 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; heig
 .pc-walk-door::before { top: 76%; }
 .pc-walk-door b { top: 62%; height: 12%; }
 .pc-walk-door { box-shadow: inset 0 0 0 5px oklch(90% 0.012 250), inset 0 0 0 6px oklch(84% 0.015 250); } .pc-walk-door::before { left: 5px; right: 5px; }
+
+/* ---------- pass 11: smooth scrolling ---------- */
+/* glass without live blur: the blur re-renders every frame while the page scrolls behind it */
+:root { --color-glass: oklch(100% 0 0 / 0.93); }
+.pc *, .pc *::before, .pc *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.pc-banner-tag, .pc-area-chip { background: oklch(22% 0.07 255 / 0.55); }
+/* the aura: soft radial gradients alone, no filter and no endless animation */
+.pc-aura i { filter: none; animation: none; }
+/* parallax pictures and pinned stages ride on their own GPU layers */
+.pc-tile-bg img, .pc-tile-thumb img, .pc-life-img, .pc-banner-bg img, .pc-fan-card, .pc-steps-track { will-change: transform; }
+/* skip layout and paint for sections far off screen */
+.pc-quotes, .pc-faq, .pc-ins, .pc-team { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* hero FLIP: the centre card is full-screen and scaled; a spacer keeps its place in the row */
+.pc-fan-inner { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.pc-fan-spacer { display: none; flex: none; }
+.pc-fan.is-zoom .pc-fan-spacer { display: block; width: 30vw; height: 74svh; }
+.pc-fan.is-zoom .pc-fan-center { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 50% 50%; will-change: transform; }
+.pc-fan.is-zoom .pc-fan-inner { will-change: transform; }
+/* care pictures cross-fade (composited) instead of a clip-path wipe (repainted) */
+.pc-tx-img { clip-path: none !important; opacity: 0; transition: opacity 700ms var(--ease-out); }
+.pc-tx-img[data-on="true"] { opacity: 1; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { motion } from "motion/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -13,6 +13,8 @@ const Walk3D = dynamic(() => import("./Walk3D"), { ssr: false });
 import { ADDRESS_LINE_1, ADDRESS_LINE_2, ALSO, AREAS, BP, FAQ, FIGURES, FINDER, HOURS, MAPS_URL, PHONE_DISPLAY, PHONE_TEL, QUOTES, SPECIALTIES, TEAM } from "./content";
 
 const IMG = (n: string) => `${BP}/c2img/${n}`;
+// 200px versions for the little round thumbnails
+const THUMB = (src: string) => src.replace(/\/(c1|c2img)\/([^/]+?)\.\w+$/, "/thumb/$1-$2.jpg");
 
 // The six specialties, told as what each one is for (aims, not promises).
 const CARE = [
@@ -93,15 +95,133 @@ function Cross() {
   );
 }
 
-export default function Concept1() {
+// The care tabs keep their own state, so the pinned scroll only re-renders this block.
+const CareTabs = memo(function CareTabs({ bus, bookFor }: { bus: MutableRefObject<(i: number, n: number) => void>; bookFor: (v: string) => void }) {
   const [care, setCare] = useState(0);
   const [pts, setPts] = useState(3);
+  useEffect(() => {
+    bus.current = (i, n) => { setCare(i); setPts(n); };
+    return () => { bus.current = () => {}; };
+  }, [bus]);
+  return (
+            <div className="container pc-tx">
+              <div className="pc-tx-tabs" role="tablist" aria-label="Specialties">
+                {CARE.map((c, i) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={care === i}
+                    className="pc-tx-tab"
+                    onClick={() => { setCare(i); setPts(3); }}
+                  >
+                    <span className="pc-tx-thumb">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img decoding="async" src={THUMB(c.img)} alt="" width={96} height={96} loading="lazy" />
+                    </span>
+                    <span className="pc-tx-name">{SPECIALTIES[i].short}</span>
+                  </button>
+                ))}
+                <span className="pc-tx-ind" aria-hidden="true" style={{ transform: `translateX(${care * 100}%)` }} />
+              </div>
+
+              <div className="pc-tx-panel" role="tabpanel" aria-label={CARE[care].label}>
+                <div className="pc-tx-media">
+                  {CARE.map((c, i) => (
+                    <figure key={c.id} className="pc-tx-img" data-on={care === i}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img decoding="async" src={c.img} alt={care === i ? c.alt : ""} width={1600} height={1100} loading="lazy" />
+                    </figure>
+                  ))}
+                  <span className="pc-tx-count num">{String(care + 1).padStart(2, "0")} / 06</span>
+                </div>
+                <div className="pc-tx-body" key={CARE[care].id}>
+                  <p className="pc-care-label"><Cross /> {CARE[care].label}</p>
+                  <h3 className="pc-tx-title">{CARE[care].title}</h3>
+                  <ol className="pc-tx-points">
+                    {POINTS[care].map(([k, v], j) => (
+                      <li key={k} data-on={j < pts}>
+                        <span className="pc-tx-check" aria-hidden="true">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
+                        </span>
+                        <span className="pc-tx-k">{k}</span>
+                        <span className="pc-tx-v">{v}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  {SPECIALTIES[care].confirm && <p className="pc-confirm">{SPECIALTIES[care].confirm}</p>}
+                  <div className="pc-care-links">
+                    <button type="button" className="pc-btn pc-btn-primary" onClick={() => bookFor(SPECIALTIES[care].name)}>
+                      Book for {SPECIALTIES[care].short.toLowerCase()} <Arrow size={16} />
+                    </button>
+                    <a href={SPECIALTIES[care].href} target="_blank" rel="noreferrer" className="pc-link">Learn more</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+  );
+});
+
+// The walk's room card and room map, re-rendered on their own as the camera moves.
+const WalkHud = memo(function WalkHud({ bus, onJump }: { bus: MutableRefObject<(i: number) => void>; onJump: (i: number) => void }) {
+  const [walk, setWalk] = useState(-1);
+  useEffect(() => {
+    bus.current = (i) => setWalk(i);
+    return () => { bus.current = () => {}; };
+  }, [bus]);
+  return (
+    <>
+            {walk >= 0 && walk < WALK.length && (
+              <div className="pc-walk-card" data-side={WALK[walk].side} key={walk}>
+                <p className="pc-walk-card-n"><span className="num">{String(walk + 1).padStart(2, "0")}</span> / {String(WALK.length).padStart(2, "0")}</p>
+                <h3>{WALK[walk].room}</h3>
+                <p className="pc-walk-card-lead">{WALK[walk].lead}</p>
+                <ul>
+                  {WALK[walk].points.map((p) => (
+                    <li key={p}>
+                      <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg></span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <nav className="pc-walk-map" aria-label="Rooms in the walk-through">
+              {WALK.map((r, i) => (
+                <button
+                  key={r.room}
+                  type="button"
+                  data-on={walk === i}
+                  data-past={walk > i}
+                  onClick={() => onJump(i)}
+                >
+                  <i />
+                  <span>{r.room}</span>
+                </button>
+              ))}
+            </nav>
+    </>
+  );
+});
+
+export default function Concept1() {
   const [concern, setConcern] = useState("");
   const [note, setNote] = useState(false);
   const [mega, setMega] = useState(false);
-  const [walk, setWalk] = useState(-1);
   const walkST = useRef<ScrollTrigger | null>(null);
   const walkDriver = useRef<WalkDriver>({ t: 0, kick: () => {} });
+  const careBus = useRef<(i: number, n: number) => void>(() => {});
+  const walkBus = useRef<(i: number) => void>(() => {});
+  const bookRef = useRef<(v: string) => void>(() => {});
+  const bookStable = useCallback((v: string) => bookRef.current(v), []);
+  const walkJump = useCallback((i: number) => {
+    const st = walkST.current;
+    if (!st) return;
+    const y = st.start + ((i + 1) / (WALK.length + 1)) * (st.end - st.start);
+    if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6 });
+    else window.scrollTo({ top: y, behavior: "smooth" });
+  }, []);
   const status = useOpenStatus();
   const root = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
@@ -112,7 +232,7 @@ export default function Concept1() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const tick = (t: number) => lenisRef.current?.raf(t * 1000);
     if (!reduce) {
-      const lenis = new Lenis({ lerp: 0.085, smoothWheel: true });
+      const lenis = new Lenis({ lerp: 0.12, smoothWheel: true, wheelMultiplier: 1 });
       lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
@@ -129,13 +249,43 @@ export default function Concept1() {
         /* ===== Pinned scenes first, in page order ===== */
 
         // Hero: the fan of five pictures opens; the centre one becomes the whole screen.
+        // The centre card is laid out full-screen and scaled down (FLIP), so the opening is transform-only.
+        const fan = document.querySelector<HTMLElement>(".pc-fan");
+        const fanCard = document.querySelector<HTMLElement>(".pc-fan-center");
+        const fanInner = document.querySelector<HTMLElement>(".pc-fan-inner");
+        const fanSpacer = document.querySelector<HTMLElement>(".pc-fan-spacer");
+        const fanPin = document.querySelector<HTMLElement>(".pc-fan-pin");
+        const fanP = { v: 0 };
+        let fsx = 0.3, fsy = 0.74, fdx = 0, fdy = 0;
+        const fanMeasure = () => {
+          if (!fanSpacer || !fanPin) return;
+          const s = fanSpacer.getBoundingClientRect(), p = fanPin.getBoundingClientRect();
+          fsx = s.width / p.width; fsy = s.height / p.height;
+          fdx = s.left + s.width / 2 - (p.left + p.width / 2);
+          fdy = s.top + s.height / 2 - (p.top + p.height / 2);
+        };
+        const fanApply = (v: number) => {
+          if (!fanCard || !fanInner) return;
+          const a = fsx + (1 - fsx) * v, b = fsy + (1 - fsy) * v;
+          const net = (fsy + (1 - fsy) * v) * (1.15 - 0.15 * v);
+          const r = 28 * (1 - v);
+          fanCard.style.transform = `translate3d(${fdx * (1 - v)}px, ${fdy * (1 - v)}px, 0) scale(${a}, ${b})`;
+          fanCard.style.borderRadius = `${r / a}px / ${r / b}px`;
+          fanInner.style.transform = `scale(${net / a}, ${net / b})`;
+        };
+        const fanRefresh = () => { fanMeasure(); fanApply(fanP.v); };
+        if (desktop && fan) {
+          fan.classList.add("is-zoom");
+          fanMeasure();
+          fanApply(0);
+          ScrollTrigger.addEventListener("refresh", fanRefresh);
+        }
         if (desktop) {
           gsap
-            .timeline({ scrollTrigger: { trigger: ".pc-fan", start: "top top", end: "+=140%", pin: ".pc-fan-pin", scrub: 0.9, anticipatePin: 1 } })
+            .timeline({ scrollTrigger: { trigger: ".pc-fan", start: "top top", end: "+=140%", pin: ".pc-fan-pin", scrub: 0.4, anticipatePin: 1 } })
             .to(".pc-fan-side-l", { xPercent: -140, rotate: -10, opacity: 0, ease: "power2.in", duration: 0.5 }, 0)
             .to(".pc-fan-side-r", { xPercent: 140, rotate: 10, opacity: 0, ease: "power2.in", duration: 0.5 }, 0)
-            .to(".pc-fan-center", { width: "100vw", height: "100svh", borderRadius: 0, ease: "power2.inOut", duration: 0.7 }, 0.1)
-            .fromTo(".pc-fan-center img", { scale: 1.15 }, { scale: 1, ease: "none", duration: 0.8 }, 0.1)
+            .fromTo(fanP, { v: 0 }, { v: 1, ease: "power2.inOut", duration: 0.7, onUpdate: () => fanApply(fanP.v) }, 0.1)
             .fromTo(".pc-fan-over", { opacity: 0, y: 50 }, { opacity: 1, y: 0, ease: "power3.out", duration: 0.3 }, 0.62)
             .fromTo(".pc-fan-chip", { opacity: 0, y: 30 }, { opacity: 1, y: 0, stagger: 0.06, duration: 0.25 }, 0.72);
         }
@@ -153,8 +303,7 @@ export default function Concept1() {
               const i = Math.min(CARE.length - 1, Math.floor(pos));
               const local = Math.min(0.999, pos - i);
               const n = Math.min(3, 1 + Math.floor(local * 3.6));
-              setCare((c) => (c === i ? c : i));
-              setPts((p) => (p === n ? p : n));
+              careBus.current(i, n);
             },
           });
         }
@@ -169,14 +318,14 @@ export default function Concept1() {
               start: "top top",
               end: () => "+=" + window.innerHeight * 1.1 * segs,
               pin: ".pc-walk-stage",
-              scrub: 0.6,
+              scrub: true,
               anticipatePin: 1,
               onUpdate: (self) => {
                 const t = self.progress * segs;
                 walkDriver.current.t = t;
                 walkDriver.current.kick();
                 const i = t < 0.5 ? -1 : Math.min(WALK.length, Math.round(t) - 1);
-                setWalk((w) => (w === i ? w : i));
+                walkBus.current(i);
               },
             },
           });
@@ -197,7 +346,7 @@ export default function Concept1() {
           gsap.to(track, {
             x: () => -dist(),
             ease: "none",
-            scrollTrigger: { trigger: ".pc-steps", start: "top top+=60", end: () => `+=${dist()}`, pin: true, scrub: 1, invalidateOnRefresh: true },
+            scrollTrigger: { trigger: ".pc-steps", start: "top top+=60", end: () => `+=${dist()}`, pin: true, scrub: 0.4, invalidateOnRefresh: true },
           });
         }
 
@@ -210,7 +359,8 @@ export default function Concept1() {
           .from(".pc-hero .pc-pill", { y: 16, opacity: 0, duration: 0.9 }, 0.1)
           .from(h1.words, { yPercent: 115, duration: 1.3, stagger: 0.05 }, 0.2)
           .from(".pc-hero-lead, .pc-hero .pc-actions", { y: 24, opacity: 0, duration: 1, stagger: 0.1 }, 0.65)
-          .from(".pc-fan-card", { y: 160, opacity: 0, rotate: (i) => [-8, -4, 0, 4, 8][i] ?? 0, duration: 1.6, stagger: 0.08 }, 0.55);
+          .from(desktop ? ".pc-fan-card:not(.pc-fan-center)" : ".pc-fan-card", { y: 160, opacity: 0, rotate: (i) => (desktop ? [-8, -4, 4, 8] : [-8, -4, 0, 4, 8])[i] ?? 0, duration: 1.6, stagger: 0.08 }, 0.55)
+          .from(desktop ? ".pc-fan-center" : [], { opacity: 0, duration: 1.4 }, 0.7);
 
         /* ===== Entrances and scrubs ===== */
         gsap.to(".pc-progress-top", { scaleX: 1, ease: "none", scrollTrigger: { start: 0, end: "max", scrub: 0.3 } });
@@ -257,7 +407,7 @@ export default function Concept1() {
           const img = el.querySelector(".pc-banner-bg img");
           if (img) gsap.fromTo(img, { yPercent: -10, scale: 1.2 }, { yPercent: 10, scale: 1.2, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
           gsap.from(el.querySelectorAll(".pc-banner-in > *"), { y: 50, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.09, scrollTrigger: enter(el, "top 80%") });
-          gsap.fromTo(el, { clipPath: "inset(8% 6% 8% 6% round 40px)" }, { clipPath: "inset(0% 0% 0% 0% round 28px)", ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "top 40%", scrub: true } });
+          gsap.fromTo(el, { scale: 0.94 }, { scale: 1, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "top 40%", scrub: true } });
         });
 
         gsap.from(".pc-area-chip", { y: 20, opacity: 0, duration: 0.7, ease: "expo.out", stagger: 0.035, scrollTrigger: enter(".pc-areas-chips", "top 90%") });
@@ -270,6 +420,12 @@ export default function Concept1() {
         const re = () => ScrollTrigger.refresh();
         document.fonts?.ready.then(re);
         window.addEventListener("load", re, { once: true });
+        return () => {
+          ScrollTrigger.removeEventListener("refresh", fanRefresh);
+          fan?.classList.remove("is-zoom");
+          if (fanCard) { fanCard.style.transform = ""; fanCard.style.borderRadius = ""; }
+          if (fanInner) fanInner.style.transform = "";
+        };
       });
     }, root);
     return () => {
@@ -297,6 +453,7 @@ export default function Concept1() {
     setMega(false);
     scrollTo("#book");
   };
+  bookRef.current = bookFor;
   const goMega = (id: string) => (e: React.MouseEvent) => {
     setMega(false);
     go(id)(e);
@@ -332,7 +489,7 @@ export default function Concept1() {
         <div className="pc-nav-bar">
           <a href="#top" className="pc-logo" aria-label="ProCare Wellness Institute, home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BP}/c1/procare-logo-color.png`} alt="ProCare Wellness Institute, Regenerative and Aesthetic Medicine" width={480} height={135} />
+            <img decoding="async" src={`${BP}/c1/procare-logo-color.png`} alt="ProCare Wellness Institute, Regenerative and Aesthetic Medicine" width={480} height={135} />
           </a>
           <nav aria-label="Primary" className="pc-nav-links">
             <button
@@ -360,10 +517,10 @@ export default function Concept1() {
           <div className="pc-mega-grid">
             {SPECIALTIES.map((s, i) => (
               <div key={s.id} className="pc-mega-col">
-                <a href="#care" className="pc-mega-head" onClick={(e) => { setCare(i); setPts(3); goMega("#care")(e); }}>
+                <a href="#care" className="pc-mega-head" onClick={(e) => { careBus.current(i, 3); goMega("#care")(e); }}>
                   <span className="pc-mega-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={CARE[i].img} alt="" width={96} height={96} loading="lazy" />
+                    <img decoding="async" src={THUMB(CARE[i].img)} alt="" width={96} height={96} loading="lazy" />
                   </span>
                   {s.short}
                 </a>
@@ -423,15 +580,17 @@ export default function Concept1() {
             <div className="pc-fan-pin">
               <figure className="pc-fan-card pc-fan-side-l pc-fan-far">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("garden.jpg")} alt="Two older women tending a flowering garden" width={2000} height={1333} />
+                <img decoding="async" src={IMG("garden.jpg")} alt="Two older women tending a flowering garden" width={2000} height={1333} />
               </figure>
               <figure className="pc-fan-card pc-fan-side-l">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("couple-laugh.jpg")} alt="An older couple laughing together outdoors" width={2000} height={1333} />
+                <img decoding="async" src={IMG("couple-laugh.jpg")} alt="An older couple laughing together outdoors" width={2000} height={1333} />
               </figure>
+              <i className="pc-fan-spacer" aria-hidden="true" />
               <figure className="pc-fan-card pc-fan-center">
+                <div className="pc-fan-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("marsh-walk.jpg")} alt="An older couple walking along a boardwalk through marsh grass" width={2000} height={1333} fetchPriority="high" />
+                <img decoding="async" src={IMG("marsh-walk.jpg")} alt="An older couple walking along a boardwalk through marsh grass" width={2000} height={1333} fetchPriority="high" />
                 <div className="pc-fan-over">
                   <p className="pc-fan-big">Back on the boardwalk, back in the garden, back to you.</p>
                   <ul className="pc-fan-chips">
@@ -440,14 +599,15 @@ export default function Concept1() {
                     <li className="pc-fan-chip"><strong>Building 500</strong> {ADDRESS_LINE_1.replace(", Building 500", "")}</li>
                   </ul>
                 </div>
+                </div>
               </figure>
               <figure className="pc-fan-card pc-fan-side-r">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("physio-knee.jpg")} alt="A physical therapist working on a patient's knee" width={2000} height={1333} />
+                <img decoding="async" src={IMG("physio-knee.jpg")} alt="A physical therapist working on a patient's knee" width={2000} height={1333} />
               </figure>
               <figure className="pc-fan-card pc-fan-side-r pc-fan-far">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("coast.jpg")} alt="An older couple sharing a kiss on a windy beach" width={2000} height={1333} />
+                <img decoding="async" src={IMG("coast.jpg")} alt="An older couple sharing a kiss on a windy beach" width={2000} height={1333} />
               </figure>
             </div>
           </div>
@@ -489,7 +649,7 @@ export default function Concept1() {
               <li className="pc-tile pc-tile-photo pc-tile-a">
                 <figure className="pc-tile-bg">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={IMG("physio-knee.jpg")} alt="" width={1600} height={1000} loading="lazy" />
+                  <img decoding="async" src={IMG("physio-knee.jpg")} alt="" width={1600} height={1000} loading="lazy" />
                 </figure>
                 <span className="pc-tile-num num"><span data-count={6}>6</span></span>
                 <span className="pc-tile-label">clinical specialties under one roof</span>
@@ -498,7 +658,7 @@ export default function Concept1() {
               <li className="pc-tile pc-tile-photo pc-tile-b">
                 <figure className="pc-tile-bg">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`${BP}/c1/forsyth.jpg`} alt="" width={1600} height={1200} loading="lazy" />
+                  <img decoding="async" src={`${BP}/c1/forsyth.jpg`} alt="" width={1600} height={1200} loading="lazy" />
                 </figure>
                 <span className="pc-tile-num num"><span data-count={13}>13</span></span>
                 <span className="pc-tile-label">Savannah-area communities served</span>
@@ -514,7 +674,7 @@ export default function Concept1() {
               <li className="pc-tile pc-tile-white pc-tile-d">
                 <figure className="pc-tile-thumb">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={IMG("clinic-talk.jpg")} alt="" width={800} height={600} loading="lazy" />
+                  <img decoding="async" src={IMG("clinic-talk.jpg")} alt="" width={800} height={600} loading="lazy" />
                 </figure>
                 <span className="pc-tile-num num">40–<span data-count={60}>60</span></span>
                 <span className="pc-tile-label">minute first visit, from assessment to plan</span>
@@ -539,61 +699,7 @@ export default function Concept1() {
               <h2 id="pc-care-h" data-split>What we treat</h2>
               <p className="pc-head-lead">Six specialties under one roof. Open yours, then book for exactly that.</p>
             </div>
-            <div className="container pc-tx">
-              <div className="pc-tx-tabs" role="tablist" aria-label="Specialties">
-                {CARE.map((c, i) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={care === i}
-                    className="pc-tx-tab"
-                    onClick={() => { setCare(i); setPts(3); }}
-                  >
-                    <span className="pc-tx-thumb">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.img} alt="" width={96} height={96} loading="lazy" />
-                    </span>
-                    <span className="pc-tx-name">{SPECIALTIES[i].short}</span>
-                  </button>
-                ))}
-                <span className="pc-tx-ind" aria-hidden="true" style={{ transform: `translateX(${care * 100}%)` }} />
-              </div>
-
-              <div className="pc-tx-panel" role="tabpanel" aria-label={CARE[care].label}>
-                <div className="pc-tx-media">
-                  {CARE.map((c, i) => (
-                    <figure key={c.id} className="pc-tx-img" data-on={care === i}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.img} alt={care === i ? c.alt : ""} width={1600} height={1100} loading="lazy" />
-                    </figure>
-                  ))}
-                  <span className="pc-tx-count num">{String(care + 1).padStart(2, "0")} / 06</span>
-                </div>
-                <div className="pc-tx-body" key={CARE[care].id}>
-                  <p className="pc-care-label"><Cross /> {CARE[care].label}</p>
-                  <h3 className="pc-tx-title">{CARE[care].title}</h3>
-                  <ol className="pc-tx-points">
-                    {POINTS[care].map(([k, v], j) => (
-                      <li key={k} data-on={j < pts}>
-                        <span className="pc-tx-check" aria-hidden="true">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
-                        </span>
-                        <span className="pc-tx-k">{k}</span>
-                        <span className="pc-tx-v">{v}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  {SPECIALTIES[care].confirm && <p className="pc-confirm">{SPECIALTIES[care].confirm}</p>}
-                  <div className="pc-care-links">
-                    <button type="button" className="pc-btn pc-btn-primary" onClick={() => bookFor(SPECIALTIES[care].name)}>
-                      Book for {SPECIALTIES[care].short.toLowerCase()} <Arrow size={16} />
-                    </button>
-                    <a href={SPECIALTIES[care].href} target="_blank" rel="noreferrer" className="pc-link">Learn more</a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CareTabs bus={careBus} bookFor={bookStable} />
           </div>
           <div className="container">
             <div className="pc-also">
@@ -628,21 +734,7 @@ export default function Concept1() {
               <span className="pc-walk-cue"><span className="pc-walk-hint" aria-hidden="true"><i /></span> Scroll to open the doors</span>
             </div>
 
-            {walk >= 0 && walk < WALK.length && (
-              <div className="pc-walk-card" data-side={WALK[walk].side} key={walk}>
-                <p className="pc-walk-card-n"><span className="num">{String(walk + 1).padStart(2, "0")}</span> / {String(WALK.length).padStart(2, "0")}</p>
-                <h3>{WALK[walk].room}</h3>
-                <p className="pc-walk-card-lead">{WALK[walk].lead}</p>
-                <ul>
-                  {WALK[walk].points.map((p) => (
-                    <li key={p}>
-                      <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg></span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <WalkHud bus={walkBus} onJump={walkJump} />
 
             <div className="pc-walk-end">
               <div className="pc-walk-end-in">
@@ -654,26 +746,6 @@ export default function Concept1() {
               </div>
             </div>
 
-            <nav className="pc-walk-map" aria-label="Rooms in the walk-through">
-              {WALK.map((r, i) => (
-                <button
-                  key={r.room}
-                  type="button"
-                  data-on={walk === i}
-                  data-past={walk > i}
-                  onClick={() => {
-                    const st = walkST.current;
-                    if (!st) return;
-                    const y = st.start + ((i + 1) / (WALK.length + 1)) * (st.end - st.start);
-                    if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6 });
-                    else window.scrollTo({ top: y, behavior: "smooth" });
-                  }}
-                >
-                  <i />
-                  <span>{r.room}</span>
-                </button>
-              ))}
-            </nav>
             <p className="pc-walk-note">Photographs are stand-ins for ProCare’s own rooms.</p>
           </div>
 
@@ -685,7 +757,7 @@ export default function Concept1() {
                 <li key={r.room}>
                   <figure>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.img} alt="" width={800} height={540} loading="lazy" />
+                    <img decoding="async" src={r.img} alt="" width={800} height={540} loading="lazy" />
                   </figure>
                   <div>
                     <p className="pc-walk-card-n"><span className="num">{String(i + 1).padStart(2, "0")}</span> {r.room}</p>
@@ -716,7 +788,7 @@ export default function Concept1() {
                     {s.img ? (
                       <figure className="pc-step-img">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={s.img} alt="" width={1600} height={1100} loading="lazy" />
+                        <img decoding="async" src={s.img} alt="" width={1600} height={1100} loading="lazy" />
                       </figure>
                     ) : (
                       <a href={PHONE_TEL} className="pc-step-img pc-step-call">
@@ -740,7 +812,7 @@ export default function Concept1() {
         <section className="pc-banner pc-banner-urgent" aria-labelledby="pc-urgent-h">
           <figure className="pc-banner-bg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={IMG("clinic-care.jpg")} alt="" width={2000} height={1333} loading="lazy" />
+            <img decoding="async" src={IMG("clinic-care.jpg")} alt="" width={2000} height={1333} loading="lazy" />
           </figure>
           <div className="pc-banner-in">
             <p className="pc-banner-tag"><span className="pc-live-dot" aria-hidden="true" /> Same-day urgent appointments</p>
@@ -791,7 +863,7 @@ export default function Concept1() {
             {["couple-dance.jpg", "boardwalk.jpg", "autumn-walk.jpg", "coast.jpg"].map((n) => (
               <figure key={n} className="pc-life-img">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG(n)} alt="" width={1200} height={800} loading="lazy" />
+                <img decoding="async" src={IMG(n)} alt="" width={1200} height={800} loading="lazy" />
               </figure>
             ))}
           </div>
@@ -830,7 +902,7 @@ export default function Concept1() {
             <div className="pc-banner pc-ins-photo">
               <figure className="pc-banner-bg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={IMG("consult.jpg")} alt="" width={1600} height={1100} loading="lazy" />
+                <img decoding="async" src={IMG("consult.jpg")} alt="" width={1600} height={1100} loading="lazy" />
               </figure>
               <div className="pc-banner-in">
                 <p className="pc-banner-tag">Insurance and costs</p>
@@ -883,7 +955,7 @@ export default function Concept1() {
         <section className="pc-banner pc-areas-band" aria-labelledby="pc-areas-h">
           <figure className="pc-banner-bg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${BP}/c1/forsyth.jpg`} alt="" width={2000} height={1400} loading="lazy" />
+            <img decoding="async" src={`${BP}/c1/forsyth.jpg`} alt="" width={2000} height={1400} loading="lazy" />
           </figure>
           <div className="pc-banner-in pc-areas-in">
             <div>
@@ -966,7 +1038,7 @@ export default function Concept1() {
       <footer className="pc-foot">
         <div className="container">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${BP}/c1/procare-logo-white.png`} alt="ProCare Wellness Institute" width={480} height={135} className="pc-foot-logo" />
+          <img decoding="async" src={`${BP}/c1/procare-logo-white.png`} alt="ProCare Wellness Institute" width={480} height={135} className="pc-foot-logo" />
           <div className="pc-foot-grid">
             <nav aria-label="Footer">
               <ul>
