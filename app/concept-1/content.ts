@@ -44,8 +44,8 @@ export const SPECIALTIES: Specialty[] = [
     summary: "Numbness, tingling and burning in the hands and feet, treated with drug-free electroanalgesic therapy.",
     conditions: ["Diabetic neuropathy", "Peripheral neuropathy", "Post-chemo neuropathy", "Sciatica"],
     href: "https://pcw.health/peripheral-neuropathy/",
-    image: `${BP}/c1/neuropathy.webp`,
-    alt: "An older woman smiling as she shapes a ceramic bowl with her hands",
+    image: `${BP}/c2img/foot-care.jpg`,
+    alt: "A clinician's hands treating a patient's foot on a clinic bed",
   },
   {
     id: "wound",
@@ -184,4 +184,27 @@ export const CREDITS =
 export const MARQUEE = [
   ["Knee pain", "Sciatica", "Diabetic neuropathy", "Rotator cuff", "Plantar fasciitis", "Arthritis", "Tennis elbow"],
   ["Pressure ulcers", "Spinal stenosis", "Carpal tunnel", "Venous ulcers", "Post-surgical wounds", "Hip pain", "Nerve pain"],
+];
+
+// Treatments named on pcw.health. Lines explain each in plain words; they make no outcome claims.
+export const TREATMENTS = [
+  { name: "Hyaluronic acid injections", for: "Knee arthritis", line: "A gel injected into the knee joint to cushion it and ease arthritis pain.", img: "c2img/physio-knee.jpg", spec: "Joint and orthopedic pain", href: "https://pcw.health/hyaluronic-acid-injections-for-knee-pain/" },
+  { name: "Platelet-rich plasma (PRP)", for: "Tendons, ligaments, joints", line: "Platelets from your own blood, concentrated and injected where healing is needed.", img: "c1/injection.jpg", spec: "Regenerative recovery", href: "https://pcw.health/pain-management-and-recovery/" },
+  { name: "Shockwave therapy", for: "Plantar fasciitis, tendon pain", line: "Sound waves applied through the skin to ease pain in tendons and soft tissue.", img: "c2img/spine-care.jpg", spec: "Joint and orthopedic pain", href: "https://pcw.health/pain-management-and-recovery/" },
+  { name: "Electroanalgesic therapy", for: "Neuropathy", line: "A drug-free electrical nerve treatment for numbness, tingling and burning.", img: "c2img/foot-care.jpg", spec: "Neuropathy and nerve pain", href: "https://pcw.health/peripheral-neuropathy/" },
+  { name: "Amniotic membrane therapy", for: "Chronic wounds and ulcers", line: "A thin tissue graft placed over a wound that will not close on its own.", img: "c1/wound.jpg", spec: "Advanced wound care", href: "https://pcw.health/wound-care-services/" },
+  { name: "Red light therapy", for: "Wound healing", line: "Low-level light used alongside wound care to support tissue repair.", img: "c2img/clinic-care.jpg", spec: "Advanced wound care", href: "https://pcw.health/wound-care-services/" },
+  { name: "Peptide therapy", for: "Recovery and wellness", line: "Peptides prescribed to support recovery after injury or surgery.", img: "c2img/consult.jpg", spec: "Regenerative recovery", href: "https://pcw.health/pain-management-and-recovery/" },
+  { name: "Physical therapy", for: "Strength and mobility", line: "Guided exercise on site, or remotely from home, to rebuild strength.", img: "c2img/strength.jpg", spec: "Spine and chronic pain", href: "https://pcw.health/health-conditions/" },
+];
+
+// The quick finder on the first screen: plain-words concerns, each mapped to a specialty.
+export const FINDER = [
+  { label: "Knee or hip pain", spec: "Joint and orthopedic pain" },
+  { label: "Numb or burning feet", spec: "Neuropathy and nerve pain" },
+  { label: "A wound that won’t heal", spec: "Advanced wound care" },
+  { label: "Back pain or sciatica", spec: "Spine and chronic pain" },
+  { label: "Swollen legs", spec: "Vascular and circulation" },
+  { label: "Sports injury", spec: "Regenerative recovery" },
+  { label: "Weight loss", spec: "Medical weight loss" },
 ];

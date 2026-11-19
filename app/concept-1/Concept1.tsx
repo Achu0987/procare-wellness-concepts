@@ -6,16 +6,20 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { ADDRESS_LINE_1, ADDRESS_LINE_2, ALSO, AREAS, BP, FAQ, FIGURES, HOURS, MAPS_URL, PHONE_DISPLAY, PHONE_TEL, QUOTES, SPECIALTIES, TEAM } from "./content";
+import dynamic from "next/dynamic";
+import type { WalkDriver } from "./Walk3D";
+
+const Walk3D = dynamic(() => import("./Walk3D"), { ssr: false });
+import { ADDRESS_LINE_1, ADDRESS_LINE_2, ALSO, AREAS, BP, FAQ, FIGURES, FINDER, HOURS, MAPS_URL, PHONE_DISPLAY, PHONE_TEL, QUOTES, SPECIALTIES, TEAM } from "./content";
 
 const IMG = (n: string) => `${BP}/c2img/${n}`;
 
 // The six specialties, told as what each one is for (aims, not promises).
 const CARE = [
   { id: "joint", label: "Joint and orthopedic pain", title: "Ease knee, hip and shoulder pain without surgery.", img: IMG("physio-knee.jpg"), alt: "A physical therapist working on a patient's knee" },
-  { id: "neuropathy", label: "Neuropathy and nerve pain", title: "Calm the numbness and burning in hands and feet.", img: `${BP}/c1/neuropathy.webp`, alt: "An older woman smiling as she shapes a ceramic bowl" },
+  { id: "neuropathy", label: "Neuropathy and nerve pain", title: "Calm the numbness and burning in hands and feet.", img: IMG("foot-care.jpg"), alt: "A clinician's hands treating a patient's foot on a clinic bed" },
   { id: "wound", label: "Advanced wound care", title: "A clear plan for wounds that will not heal.", img: `${BP}/c1/wound.jpg`, alt: "A clinician's gloved hands, ready to dress a wound" },
-  { id: "spine", label: "Spine and chronic pain", title: "Options for back pain, sciatica and stiffness.", img: IMG("shoulder.jpg"), alt: "A therapist stretching a patient's shoulder and back" },
+  { id: "spine", label: "Spine and chronic pain", title: "Options for back pain, sciatica and stiffness.", img: IMG("spine-care.jpg"), alt: "A clinician's hands treating a patient's upper back" },
   { id: "vascular", label: "Vascular and circulation", title: "Circulation care for tired, swollen legs and feet.", img: IMG("checkup.jpg"), alt: "A physician checking an older man's blood pressure" },
   { id: "regenerative", label: "Regenerative recovery", title: "Heal well after an injury or surgery.", img: IMG("strength.jpg"), alt: "A therapist guiding a patient through a strength exercise" },
 ];
@@ -30,6 +34,17 @@ const POINTS: [string, string][][] = [
   [["What we treat", "Circulation problems that show up in the legs and feet"], ["How", "Assessed together with your wound and pain care"], ["The aim", "Care for venous and arterial ulcers in one plan"]],
   [["What we treat", "Recovery after an injury or surgery"], ["How", "Platelet-rich plasma and peptide therapy"], ["The aim", "Physical therapy on site and remotely to rebuild strength"]],
 ];
+
+// The walk through Building 500: each room, what happens in it. Photographs are stand-ins for ProCare's own rooms.
+const WALK = [
+  { room: "Front desk", side: -1, img: `${BP}/c1/consult.jpg`, lead: "Check in, settle in. We take care of the paperwork.", points: ["Arrive 15 minutes early", "Bring your records, insurance card and loose clothing", "Insurance benefits checked for you"] },
+  { room: "Consultation", side: 1, img: `${BP}/c1/team.jpg`, lead: "Your provider listens first, then examines.", points: ["A 40 to 60 minute assessment", "Imaging and records reviewed together", "Your non-surgical options explained"] },
+  { room: "Treatment room", side: -1, img: IMG("spine-care.jpg"), lead: "Where joint, spine and nerve pain is treated.", points: ["Hyaluronic acid and PRP injections", "Shockwave therapy and guided imaging", "Electroanalgesic therapy for neuropathy"] },
+  { room: "Wound care suite", side: 1, img: `${BP}/c1/wound.jpg`, lead: "A clear plan for wounds that will not heal.", points: ["Diabetic, pressure and venous ulcers", "Amniotic membrane therapy", "Red light therapy"] },
+  { room: "Therapy and recovery", side: -1, img: IMG("strength.jpg"), lead: "Rebuild strength, here or from home.", points: ["Physical therapy, on site or remote", "Strength and mobility plans", "PRP and peptide therapy for recovery"] },
+];
+
+const WALK_END = IMG("garden.jpg");
 
 const STEPS = [
   { n: "01", title: "Call or request a visit", line: "Same-day urgent appointments are available.", img: "" },
@@ -83,6 +98,10 @@ export default function Concept1() {
   const [pts, setPts] = useState(3);
   const [concern, setConcern] = useState("");
   const [note, setNote] = useState(false);
+  const [mega, setMega] = useState(false);
+  const [walk, setWalk] = useState(-1);
+  const walkST = useRef<ScrollTrigger | null>(null);
+  const walkDriver = useRef<WalkDriver>({ t: 0, kick: () => {} });
   const status = useOpenStatus();
   const root = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
@@ -138,6 +157,37 @@ export default function Concept1() {
               setPts((p) => (p === n ? p : n));
             },
           });
+        }
+
+        // The walk: the camera moves down the corridor of Building 500, pausing at each room.
+        // The 3D scene (Walk3D, WebGL) reads the progress; the timeline only moves the text overlays.
+        if (desktop && document.querySelector(".pc-walk-stage")) {
+          const segs = WALK.length + 1;
+          const wt = gsap.timeline({
+            scrollTrigger: {
+              trigger: ".pc-walk",
+              start: "top top",
+              end: () => "+=" + window.innerHeight * 1.1 * segs,
+              pin: ".pc-walk-stage",
+              scrub: 0.6,
+              anticipatePin: 1,
+              onUpdate: (self) => {
+                const t = self.progress * segs;
+                walkDriver.current.t = t;
+                walkDriver.current.kick();
+                const i = t < 0.5 ? -1 : Math.min(WALK.length, Math.round(t) - 1);
+                setWalk((w) => (w === i ? w : i));
+              },
+            },
+          });
+          walkST.current = wt.scrollTrigger ?? null;
+          wt.to(".pc-walk-intro", { autoAlpha: 0, scale: 0.94, duration: 0.22, ease: "power2.in" }, 0);
+          wt.to(".pc-walk-door-l", { xPercent: -102, duration: 0.5, ease: "power2.inOut" }, 0.08);
+          wt.to(".pc-walk-door-r", { xPercent: 102, duration: 0.5, ease: "power2.inOut" }, 0.08);
+          wt.set(".pc-walk-doors", { autoAlpha: 0 }, 0.6);
+          wt.from(".pc-walk-map", { y: 40, opacity: 0, duration: 0.25, ease: "power2.out" }, 0.4);
+          wt.fromTo(".pc-walk-end-in", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, WALK.length + 0.7);
+          wt.to({}, { duration: 0.001 }, segs);
         }
 
         // First visit: four cards run sideways.
@@ -200,6 +250,18 @@ export default function Concept1() {
           gsap.fromTo(el, { yPercent: [18, -12, 26, -6][i % 4] }, { yPercent: [-18, 12, -26, 6][i % 4], ease: "none", scrollTrigger: { trigger: ".pc-life", start: "top bottom", end: "bottom top", scrub: true } });
         });
 
+        // The real-site layers: finder, directory, treatments, banners.
+        gsap.from(".pc-finder-in > *", { y: 40, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.08, scrollTrigger: enter(".pc-finder", "top 92%") });
+        gsap.from(".pc-finder-chip", { y: 24, opacity: 0, scale: 0.9, duration: 0.8, ease: "back.out(1.8)", stagger: 0.05, scrollTrigger: enter(".pc-finder", "top 88%") });
+        gsap.utils.toArray<HTMLElement>(".pc-banner").forEach((el) => {
+          const img = el.querySelector(".pc-banner-bg img");
+          if (img) gsap.fromTo(img, { yPercent: -10, scale: 1.2 }, { yPercent: 10, scale: 1.2, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
+          gsap.from(el.querySelectorAll(".pc-banner-in > *"), { y: 50, opacity: 0, duration: 1.1, ease: "expo.out", stagger: 0.09, scrollTrigger: enter(el, "top 80%") });
+          gsap.fromTo(el, { clipPath: "inset(8% 6% 8% 6% round 40px)" }, { clipPath: "inset(0% 0% 0% 0% round 28px)", ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "top 40%", scrub: true } });
+        });
+
+        gsap.from(".pc-area-chip", { y: 20, opacity: 0, duration: 0.7, ease: "expo.out", stagger: 0.035, scrollTrigger: enter(".pc-areas-chips", "top 90%") });
+
         gsap.from(".pc-quote", { y: 80, opacity: 0, duration: 1.2, ease: "expo.out", stagger: 0.12, scrollTrigger: enter(".pc-quotes", "top 85%") });
         gsap.from(".pc-faq-item", { y: 30, opacity: 0, duration: 0.8, ease: "expo.out", stagger: 0.06, scrollTrigger: enter(".pc-faq-list", "top 90%") });
         gsap.from(".pc-book-card", { y: 100, opacity: 0, duration: 1.3, ease: "expo.out", scrollTrigger: enter(".pc-book-card", "top 92%") });
@@ -232,29 +294,98 @@ export default function Concept1() {
   };
   const bookFor = (value: string) => {
     setConcern(value);
+    setMega(false);
     scrollTo("#book");
   };
+  const goMega = (id: string) => (e: React.MouseEvent) => {
+    setMega(false);
+    go(id)(e);
+  };
+  useEffect(() => {
+    if (!mega) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setMega(false); };
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [mega]);
 
   return (
     <div className="pc" ref={root}>
       <a href="#main" className="pc-skip">Skip to content</a>
       <div className="pc-progress-top" aria-hidden="true" />
 
-      <header className="pc-nav">
+      <div className="pc-topbar">
+        <div className="pc-topbar-in">
+          <a href={MAPS_URL} target="_blank" rel="noreferrer" className="pc-topbar-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+            {ADDRESS_LINE_1}, {ADDRESS_LINE_2}
+          </a>
+          <span className="pc-topbar-item pc-topbar-hours">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+            Mon, Wed, Thu 9 am to 5 pm, Tue 9 am to 7 pm
+          </span>
+          <span className="pc-topbar-item pc-topbar-hi">Same-day urgent appointments available</span>
+          <a href={PHONE_TEL} className="pc-topbar-item pc-topbar-tel">Call {PHONE_DISPLAY}</a>
+        </div>
+      </div>
+
+      <header className="pc-nav" onMouseLeave={() => setMega(false)}>
         <div className="pc-nav-bar">
           <a href="#top" className="pc-logo" aria-label="ProCare Wellness Institute, home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${BP}/c1/procare-logo-color.png`} alt="ProCare Wellness Institute, Regenerative and Aesthetic Medicine" width={480} height={135} />
           </a>
           <nav aria-label="Primary" className="pc-nav-links">
-            <a href="#care" onClick={go("#care")}>What we treat</a>
-            <a href="#first-visit" onClick={go("#first-visit")}>First visit</a>
-            <a href="#team" onClick={go("#team")}>Our team</a>
-            <a href="#questions" onClick={go("#questions")}>Insurance</a>
+            <button
+              type="button"
+              className="pc-nav-mega-btn"
+              aria-expanded={mega}
+              aria-controls="pc-mega"
+              onClick={() => setMega((m) => !m)}
+              onMouseEnter={() => setMega(true)}
+            >
+              What we treat
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            <a href="#first-visit" onClick={go("#first-visit")} onMouseEnter={() => setMega(false)}>First visit</a>
+            <a href="#team" onClick={go("#team")} onMouseEnter={() => setMega(false)}>Our team</a>
+            <a href="#insurance" onClick={go("#insurance")} onMouseEnter={() => setMega(false)}>Insurance</a>
           </nav>
           <div className="pc-nav-act">
             <a href={PHONE_TEL} className="pc-nav-tel">{PHONE_DISPLAY}</a>
             <a href="#book" onClick={go("#book")} className="pc-btn pc-btn-primary pc-btn-sm">Book a visit</a>
+          </div>
+        </div>
+
+        <div className="pc-mega" id="pc-mega" data-open={mega} hidden={!mega}>
+          <div className="pc-mega-grid">
+            {SPECIALTIES.map((s, i) => (
+              <div key={s.id} className="pc-mega-col">
+                <a href="#care" className="pc-mega-head" onClick={(e) => { setCare(i); setPts(3); goMega("#care")(e); }}>
+                  <span className="pc-mega-thumb">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={CARE[i].img} alt="" width={96} height={96} loading="lazy" />
+                  </span>
+                  {s.short}
+                </a>
+                <ul>
+                  {s.conditions.slice(0, 4).map((c) => (
+                    <li key={c}><button type="button" onClick={() => bookFor(s.name)}>{c}</button></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            <div className="pc-mega-side">
+              <p className="pc-mega-side-h">Also in Building 500</p>
+              <ul>
+                {ALSO.map((a) => (
+                  <li key={a.label}><a href={a.href} target="_blank" rel="noreferrer">{a.label}</a></li>
+                ))}
+              </ul>
+              <a href={PHONE_TEL} className="pc-mega-call">
+                <span>Not sure where you fit?</span>
+                <strong>{PHONE_DISPLAY}</strong>
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -318,6 +449,29 @@ export default function Concept1() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={IMG("coast.jpg")} alt="An older couple sharing a kiss on a windy beach" width={2000} height={1333} />
               </figure>
+            </div>
+          </div>
+        </section>
+
+        {/* ===== Quick finder: say what hurts, get to the right team ===== */}
+        <section className="pc-finder" aria-labelledby="pc-finder-h">
+          <div className="pc-finder-in">
+            <div className="pc-finder-text">
+              <h2 id="pc-finder-h">What brings you in today?</h2>
+              <p>Pick the closest match and we will route you to the right specialist.</p>
+            </div>
+            <ul className="pc-finder-chips">
+              {FINDER.map((f) => (
+                <li key={f.label}>
+                  <button type="button" className="pc-finder-chip" onClick={() => bookFor(f.spec)}>
+                    {f.label} <Arrow size={14} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="pc-finder-or">
+              <span>Or talk to a person</span>
+              <a href={PHONE_TEL} className="pc-finder-tel">{PHONE_DISPLAY}</a>
             </div>
           </div>
         </section>
@@ -455,6 +609,97 @@ export default function Concept1() {
           </div>
         </section>
 
+        {/* ===== Walk through Building 500: a 3D corridor, room by room ===== */}
+        <section className="pc-walk" id="inside" aria-labelledby="pc-walk-h">
+          <div className="pc-walk-stage">
+            <div className="pc-walk-view">
+              <Walk3D rooms={WALK} endImg={WALK_END} driver={walkDriver} />
+            </div>
+
+            {/* the entrance: two glass doors that slide open as the visit begins */}
+            <div className="pc-walk-doors" aria-hidden="true">
+              <i className="pc-walk-door pc-walk-door-l"><b /></i>
+              <i className="pc-walk-door pc-walk-door-r"><b /></i>
+            </div>
+            <div className="pc-walk-intro">
+              <p className="pc-walk-kicker">340 Eisenhower Drive, Building 500</p>
+              <h2 id="pc-walk-h">Step inside Building 500.</h2>
+              <p className="pc-walk-sub">Take a 1-minute walk through your first visit, room by room.</p>
+              <span className="pc-walk-cue"><span className="pc-walk-hint" aria-hidden="true"><i /></span> Scroll to open the doors</span>
+            </div>
+
+            {walk >= 0 && walk < WALK.length && (
+              <div className="pc-walk-card" data-side={WALK[walk].side} key={walk}>
+                <p className="pc-walk-card-n"><span className="num">{String(walk + 1).padStart(2, "0")}</span> / {String(WALK.length).padStart(2, "0")}</p>
+                <h3>{WALK[walk].room}</h3>
+                <p className="pc-walk-card-lead">{WALK[walk].lead}</p>
+                <ul>
+                  {WALK[walk].points.map((p) => (
+                    <li key={p}>
+                      <span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg></span>
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pc-walk-end">
+              <div className="pc-walk-end-in">
+                <h3>And then, back to your life.</h3>
+                <div className="pc-banner-act">
+                  <a href="#book" onClick={go("#book")} className="pc-btn pc-btn-white pc-btn-lg">Book your first visit</a>
+                  <a href={PHONE_TEL} className="pc-btn pc-btn-ghost pc-btn-lg">Call {PHONE_DISPLAY}</a>
+                </div>
+              </div>
+            </div>
+
+            <nav className="pc-walk-map" aria-label="Rooms in the walk-through">
+              {WALK.map((r, i) => (
+                <button
+                  key={r.room}
+                  type="button"
+                  data-on={walk === i}
+                  data-past={walk > i}
+                  onClick={() => {
+                    const st = walkST.current;
+                    if (!st) return;
+                    const y = st.start + ((i + 1) / (WALK.length + 1)) * (st.end - st.start);
+                    if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.6 });
+                    else window.scrollTo({ top: y, behavior: "smooth" });
+                  }}
+                >
+                  <i />
+                  <span>{r.room}</span>
+                </button>
+              ))}
+            </nav>
+            <p className="pc-walk-note">Photographs are stand-ins for ProCare’s own rooms.</p>
+          </div>
+
+          {/* Phones, reduced motion and no script: the same rooms as a list */}
+          <div className="container pc-walk-list">
+            <h2 className="pc-walk-list-h">Step inside Building 500.</h2>
+            <ol>
+              {WALK.map((r, i) => (
+                <li key={r.room}>
+                  <figure>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={r.img} alt="" width={800} height={540} loading="lazy" />
+                  </figure>
+                  <div>
+                    <p className="pc-walk-card-n"><span className="num">{String(i + 1).padStart(2, "0")}</span> {r.room}</p>
+                    <p className="pc-walk-card-lead">{r.lead}</p>
+                    <ul>
+                      {r.points.map((p) => (<li key={p}>{p}</li>))}
+                    </ul>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
         {/* ===== First visit, four cards running sideways ===== */}
         <section className="pc-steps" id="first-visit" aria-labelledby="pc-steps-h">
           <div className="container pc-steps-in">
@@ -487,6 +732,23 @@ export default function Concept1() {
                   </li>
                 ))}
               </ol>
+            </div>
+          </div>
+        </section>
+
+        {/* ===== Banner: same-day care ===== */}
+        <section className="pc-banner pc-banner-urgent" aria-labelledby="pc-urgent-h">
+          <figure className="pc-banner-bg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={IMG("clinic-care.jpg")} alt="" width={2000} height={1333} loading="lazy" />
+          </figure>
+          <div className="pc-banner-in">
+            <p className="pc-banner-tag"><span className="pc-live-dot" aria-hidden="true" /> Same-day urgent appointments</p>
+            <h2 id="pc-urgent-h">In pain today? Call us today.</h2>
+            <p className="pc-banner-lead">A new wound, a flare of nerve pain or an injury that cannot wait. Call the front desk and we will find you a time.</p>
+            <div className="pc-banner-act">
+              <a href={PHONE_TEL} className="pc-btn pc-btn-white pc-btn-lg">Call {PHONE_DISPLAY}</a>
+              <a href="#book" onClick={go("#book")} className="pc-btn pc-btn-ghost pc-btn-lg">Request a call back</a>
             </div>
           </div>
         </section>
@@ -562,6 +824,40 @@ export default function Concept1() {
           </div>
         </section>
 
+        {/* ===== Banner: insurance and costs ===== */}
+        <section className="pc-ins" id="insurance" aria-labelledby="pc-ins-h">
+          <div className="container pc-ins-grid">
+            <div className="pc-banner pc-ins-photo">
+              <figure className="pc-banner-bg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={IMG("consult.jpg")} alt="" width={1600} height={1100} loading="lazy" />
+              </figure>
+              <div className="pc-banner-in">
+                <p className="pc-banner-tag">Insurance and costs</p>
+                <h2 id="pc-ins-h">No surprises on cost.</h2>
+              </div>
+            </div>
+            <ul className="pc-ins-cards">
+              <li>
+                <strong>Benefits checked first</strong>
+                <span>Your coverage is verified at your first visit, before treatment starts.</span>
+              </li>
+              <li>
+                <strong>Medicare and major insurers</strong>
+                <span>Much of the non-surgical knee care is covered. We confirm what your plan pays.</span>
+              </li>
+              <li>
+                <strong>Cash and payment plans</strong>
+                <span>No insurance? Costs are explained up front, with payment plans available.</span>
+              </li>
+              <li>
+                <strong>Telemedicine</strong>
+                <span>Some follow-ups can happen from home. <a href="https://pcw.health/telemedicine/" target="_blank" rel="noreferrer" className="pc-link">How it works</a></span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
         {/* ===== Questions ===== */}
         <section className="pc-faq" id="questions" aria-labelledby="pc-faq-h">
           <div className="container pc-faq-grid">
@@ -580,6 +876,30 @@ export default function Concept1() {
                 </details>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ===== Banner: where we are, who we serve ===== */}
+        <section className="pc-banner pc-areas-band" aria-labelledby="pc-areas-h">
+          <figure className="pc-banner-bg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${BP}/c1/forsyth.jpg`} alt="" width={2000} height={1400} loading="lazy" />
+          </figure>
+          <div className="pc-banner-in pc-areas-in">
+            <div>
+              <p className="pc-banner-tag">Proudly Savannah</p>
+              <h2 id="pc-areas-h">Care close to home, across the Coastal Empire.</h2>
+              <a href={MAPS_URL} target="_blank" rel="noreferrer" className="pc-areas-addr">
+                <strong>{ADDRESS_LINE_1}</strong>
+                <span>{ADDRESS_LINE_2}</span>
+                <span className="pc-areas-dir">Get directions <Arrow size={14} /></span>
+              </a>
+            </div>
+            <ul className="pc-areas-chips" aria-label="Communities we serve">
+              {AREAS.map((a) => (
+                <li key={a} className="pc-area-chip">{a}</li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -639,7 +959,6 @@ export default function Concept1() {
                 </a>
               </div>
             </div>
-            <p className="pc-areas">Serving {AREAS.slice(0, -1).join(", ")} and {AREAS[AREAS.length - 1]}.</p>
           </div>
         </section>
       </main>
