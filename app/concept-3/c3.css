@@ -169,7 +169,7 @@ html:has(.c3)::-webkit-scrollbar { display: none; }
 .c3-steps-wrap { height: 100svh; min-height: 640px; }
 .c3-steps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 72px); height: 100%; padding: clamp(92px, 12vh, 108px) var(--pad) clamp(28px, 5vh, 56px); align-items: center; }
 .c3-steps-l { display: grid; gap: clamp(20px, 4vh, 40px); align-content: center; }
-.c3 .c3-steps h2 { font-size: clamp(2.4rem, min(4.6vw, 9vh), 5.4rem); color: var(--forest); max-width: 14ch; }
+.c3 .c3-steps h2 { font-size: clamp(2.2rem, min(4.2vw, 8vh), 5rem); color: var(--forest); max-width: 14ch; }
 .c3-steplist { display: grid; gap: clamp(8px, 1.6vh, 16px); }
 .c3-steplist li { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-4); align-items: start; padding: clamp(10px, 1.6vh, 16px) 0; opacity: 0.32; transition: opacity 400ms var(--ease); }
 .c3-steplist li[data-on="true"] { opacity: 1; }
@@ -328,4 +328,27 @@ html:has(.c3)::-webkit-scrollbar { display: none; }
   .c3-chip { order: 2; position: static; margin: 0; }
   .c3-pl { order: 5; position: static; max-width: 30ch; margin: 0; padding: 0 var(--pad); text-align: center; }
   .c3-pl-l { margin-top: var(--sp-4); }
+}
+
+/* steps: only the active step shows its sentence, so everything fits above the fold */
+.c3-steplist li p { display: none; }
+.c3-steplist li[data-on="true"] p { display: block; }
+.c3-steplist li { padding: clamp(6px, 1.2vh, 12px) 0; }
+.c3-steps-l { gap: clamp(14px, 3vh, 32px); }
+@media (max-width: 64rem) { .c3-steplist li p { display: block; } }
+
+/* phone: nothing may be wider than its column */
+.c3-form-card, .c3-book-mid, .c3-book-photo, .c3-visit-info { min-width: 0; }
+.c3-form-card { grid-template-columns: minmax(0, 1fr); }
+.c3-form-card label, .c3-form-card input, .c3-form-card select, .c3-form-card .c3-btn { min-width: 0; width: 100%; box-sizing: border-box; }
+.c3-form-card .c3-fine { overflow-wrap: anywhere; }
+.c3-xc2 { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.c3-xc2 > * { min-width: 0; }
+.c3-xc-chip { max-width: 100%; }
+@media (max-width: 40rem) {
+  .c3-xc4 { padding: 16px 10px; aspect-ratio: auto; min-height: 210px; }
+  .c3-xc4 strong { font-size: 1.05rem; max-width: none; overflow-wrap: anywhere; }
+  .c3-xc4 span { font-size: 0.95rem; overflow-wrap: anywhere; }
+  .c3-xc-chip { padding: 10px 12px 10px 10px; font-size: 0.9rem; gap: 8px; width: 100%; }
+  .c3-xc-ic { width: 38px; height: 38px; border-radius: 12px; }
 }
